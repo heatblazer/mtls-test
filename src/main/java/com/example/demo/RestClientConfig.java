@@ -66,7 +66,7 @@ public class RestClientConfig {
             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             trustManagerFactory.init(trustStore);
 
-            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+            sslContext.init(keyManagerFactory.getKeyManagers(), null/*trustManagerFactory.getTrustManagers()*/, null);
             LOGGER.info("END CONFIG");
             return sslContext;
         } catch (NoSuchAlgorithmException | KeyStoreException | CertificateException | IOException e) {
