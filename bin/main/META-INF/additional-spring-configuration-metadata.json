@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "mtls.keystore.jks.password",
+  "type": "java.lang.String",
+  "description": "A description for 'mtls.keystore.jks.password'"
+}]}

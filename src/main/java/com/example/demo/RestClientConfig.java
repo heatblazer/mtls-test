@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -19,41 +20,53 @@ import java.util.logging.Logger;
 @Configuration
 public class RestClientConfig {
 
-    private static final String PKCS12_FILE_PATH = "yourpath\\badssl.com-client.p12";
-    private static final String PKCS12_PASSWORD = "badssl.com";
-    private static final String TRUSTSTORE_FILE_PATH = "/home/ilian/eclipse-workspace/mtls/serverKeystore.jks";
-    private static final String TRUSTSTORE_PASSWORD = "123456";
+	@Value("${mtls.keystore.path}")
+	private  String pkcs12Path;
+	
+	@Value("${mtls.keystore.password}")
+	private  String pkcs12Password;
+	
+	@Value("${mtls.keystore.jks}")
+	private  String jksPath;
+	
+	@Value("${mtls.keystore.jks.password}")
+	private  String jksPassword;
+	
     
-  private static final Logger LOGGER = Logger.getLogger("RestClientConfig.java");
-
+	private static final Logger LOGGER = Logger.getLogger("RestClientConfig.java");
 
     @Bean
-    public RestTemplate restTemplate() {
+    public RestTemplate restTemplate() throws KeyManagementException {
         SSLContext sslContext = configureSSLContext();
         return new RestTemplate(createRequestFactory(sslContext));
     }
 
-    private SSLContext configureSSLContext() {
+    private SSLContext configureSSLContext() throws KeyManagementException {
         try {
         	LOGGER.info("STARTING CONFIG!!!");
         	
             SSLContext sslContext = SSLContext.getInstance("TLS");
 
-//            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-//            char[] keyStorePassword = PKCS12_PASSWORD.toCharArray();
-//            keyStore.load(new FileInputStream(PKCS12_FILE_PATH), keyStorePassword);
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            char[] keyStorePassword = pkcs12Password.toCharArray();
+            keyStore.load(new FileInputStream(pkcs12Path), keyStorePassword);
 
-//            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-//            keyManagerFactory.init(keyStore, keyStorePassword);
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            try {
+				keyManagerFactory.init(keyStore, keyStorePassword);
+			} catch (UnrecoverableKeyException e) {
+				// TODO Auto-generated catch block
+				LOGGER.info("ERROR: " + e.toString());
+			}
 
             KeyStore trustStore = KeyStore.getInstance("JKS");
-            char[] trustStorePassword = TRUSTSTORE_PASSWORD.toCharArray();
-            trustStore.load(new FileInputStream(TRUSTSTORE_FILE_PATH), trustStorePassword);
+            char[] trustStorePassword = jksPassword.toCharArray();
+            trustStore.load(new FileInputStream(jksPath), trustStorePassword);
 
             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             trustManagerFactory.init(trustStore);
 
- //           sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
             LOGGER.info("END CONFIG");
             return sslContext;
         } catch (NoSuchAlgorithmException | KeyStoreException | CertificateException | IOException e) {
